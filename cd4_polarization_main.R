@@ -42,7 +42,9 @@ write.table(df_chd2, file = paste0("chd2_effectorness.csv"), sep="\t", col.names
 # plot
 effectorness_chaserr = read.csv('chaserr_effectorness.csv', sep = '\t')
 effectorness_chaserr$stimulation_time <- factor(effectorness_chaserr$stimulation_time, levels = c('16h', '5d'))
-effectorness_chaserr$cell_type <- factor(effectorness_chaserr$cell_type, levels = c('CD4_Naive', 'CD4_Memory'))
+effectorness_chaserr[effectorness_chaserr$cell_type == 'CD4_Naive', 'cell_type'] = 'CD4+ naive'
+effectorness_chaserr[effectorness_chaserr$cell_type == 'CD4_Memory', 'cell_type'] = 'CD4+ activated'
+effectorness_chaserr$cell_type <- factor(effectorness_chaserr$cell_type, levels = c('CD4+ naive', 'CD4+ activated'))
 effectorness_chaserr$cytokine_condition <- factor(effectorness_chaserr$cytokine_condition, levels = c("Resting", "iTreg", "Th17", "IFNB", "Th0", "Th1", "Th2"))
 
 p1 <- ggplot(effectorness_chaserr, aes(x = cytokine_condition, y = value, fill=cytokine_condition))+ 
@@ -69,7 +71,10 @@ p1 <- ggplot(effectorness_chaserr, aes(x = cytokine_condition, y = value, fill=c
 
 effectorness_chd2 = read.csv('chd2_effectorness.csv', sep = '\t')
 effectorness_chd2$stimulation_time <- factor(effectorness_chd2$stimulation_time, levels = c('16h', '5d'))
-effectorness_chd2$cell_type <- factor(effectorness_chd2$cell_type, levels = c('CD4_Naive', 'CD4_Memory'))
+
+effectorness_chd2[effectorness_chd2$cell_type == 'CD4_Naive', 'cell_type'] = 'CD4+ naive'
+effectorness_chd2[effectorness_chd2$cell_type == 'CD4_Memory', 'cell_type'] = 'CD4+ activated'
+effectorness_chd2$cell_type <- factor(effectorness_chd2$cell_type, levels = c('CD4+ naive', 'CD4+ activated'))
 effectorness_chd2$cytokine_condition <- factor(effectorness_chd2$cytokine_condition, levels = c("Resting", "iTreg", "Th17", "IFNB", "Th0", "Th1", "Th2"))
 
 p2 <- ggplot(effectorness_chd2, aes(x = cytokine_condition, y = value, fill=cytokine_condition))+ 
@@ -99,4 +104,4 @@ p <-ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend="right")
 
 p3 <- readRDS('time_activation_main.rds')
 g <- arrangeGrob(p, p3, ncol = 1, nrow = 2, layout_matrix= rbind(c(1), c(2)))
-ggsave(paste0("cd4_polarization.png"), plot = g, units = "mm", width = 170, height = 225)
+ggsave(paste0("cd4_polarization.png"), plot = g, units = "mm", width = 170, height = 200)

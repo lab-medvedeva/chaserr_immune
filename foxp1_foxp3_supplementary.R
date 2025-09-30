@@ -20,12 +20,13 @@ p1 <- plot+
         axis.title.x=element_blank(),
         axis.text.x = element_blank(),
         legend.key.size = element_blank(),
-        legend.text = element_text(size = 6),
+        legend.text = element_blank(),
         legend.title = element_blank(),
         axis.text.y = element_blank(),
         axis.title = element_blank(),
         plot.title = element_blank(),
         plot.tag = element_text(size = 8, face="plain")) +
+    theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) +
     labs(title = "", tag = "A")
 
 # B. ChIP-seq from https://doi.org/10.1038/s41590-018-0291-z and https://doi.org/10.1038/s41590-023-01685-w
@@ -47,6 +48,7 @@ p2 <- plot+
         axis.title = element_blank(),
         plot.title = element_blank(),
         plot.tag = element_text(size = 8, face="plain")) +
+    theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) +
     labs(title = "", tag = "B")
 
 g <- arrangeGrob(p1, p2, ncol = 1, nrow = 2, layout_matrix= rbind(c(1), c(2)))

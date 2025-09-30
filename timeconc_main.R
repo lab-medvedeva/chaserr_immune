@@ -163,7 +163,7 @@ chd2_expr$expr <- as.double(chd2_expr$expr)
 chd2_expr$time <- factor(as.character(chd2_expr$time), levels = c( "0", "0.5", "1", "2", "4", "6", "8", "12", "24", "48", "72", "96", "120", "144"))
 all_expr <- rbind(chaser_expr, chd2_expr)
 
-p6 <- ggplot(all_expr, aes(x = time, y = expr, fill = gene)) + # , fill = celltype
+p <- ggplot(all_expr, aes(x = time, y = expr, fill = gene)) + # , fill = celltype
   facet_grid(.~gene, scales = "fixed", space = "fixed") +
   theme_bw() +
   geom_boxplot() +
@@ -183,102 +183,4 @@ p6 <- ggplot(all_expr, aes(x = time, y = expr, fill = gene)) + # , fill = cellty
   geom_smooth(method="loess", aes(group = 1)) +
   labs(x = "Time (hours)" , y = "Expression (TPM)", title = "", tag = "B")
 
-# B. T cell activation and FANTOM6 knockdown signature
-# T cell activation differentially expressed genes
-# https://doi.org/10.1186/s13059-023-03120-7
-# https://static-content.springer.com/esm/art%3A10.1186%2Fs13059-023-03120-7/MediaObjects/13059_2023_3120_MOESM2_ESM.html
-
-modules_activation <- read.csv('T_cell_activation.csv', sep = ',')
-rownames(modules_activation) <- modules_activation$Ensembl
-
-# FANTOM6 signature
-# https://fantom.gsc.riken.jp/6/datafiles/Core_FANTOM6/RELEASE_latest/analysis/DEGs/01_combined/DESeq2_genes_ASO_all.tsv.bz2
-
-aso_df <- read.csv("../DESeq2_genes_ASO_all.tsv", sep = '\t')
-aso_df_fdr <- dplyr::filter(aso_df, fdr < 0.05)
-aso_df_07 <- dplyr::filter(aso_df_fdr, perturb_id == 'ASO_G0272888_AD_07')
-aso_df_10 <- dplyr::filter(aso_df_fdr, perturb_id == 'ASO_G0272888_AD_10')
-inter_07 <- intersect(aso_df_07$geneID, modules_activation$Ensembl)
-rownames(aso_df_07) <- aso_df_07$geneID
-aso_df_07_module <- aso_df_07[inter_07,]
-aso_df_07_module$aso <- 'ASO_07'
-aso_df_07_module$Effect <- modules_activation[inter_07, 'Effect']
-inter_10 <- intersect(aso_df_10$geneID, modules_activation$Ensembl)
-rownames(aso_df_10) <- aso_df_10$geneID
-aso_df_10_module <- aso_df_10[inter_10,]
-aso_df_10_module$aso <- 'ASO_10'
-aso_df_10_module$Effect <- modules_activation[inter_10, 'Effect']
-modules_activation_inter <- rbind(aso_df_07_module, aso_df_10_module)
-modules_activation_inter$to_include <- sign(modules_activation_inter$log2FC) == sign(modules_activation_inter$Effect)
-write.table(modules_activation_inter, file = paste0("modules_activation_inter.csv"), sep="\t", col.names=TRUE, quote = FALSE)
-modules_activation_inter <- modules_activation_inter[order(modules_activation_inter$to_include), ]
-modules_activation_inter <- modules_activation_inter[modules_activation_inter$geneSymbol != "AC013394.2", ]
-modules_activation_inter1 <- modules_activation_inter
-modules_activation_inter1$type <- 'FANTOM6 logfc'
-
-p1 <- ggplot(modules_activation_inter1, aes(x = geneSymbol, y = type, fill = log2FC)) +
-facet_grid(. ~ aso, scales = "free",  space = "free") +
-   geom_tile(width = 1) +
-   theme_bw() +
-scale_fill_distiller(palette = "RdBu", limits = c(-1, 1)) +
-scale_x_discrete(drop = TRUE) +
-scale_y_discrete(drop = FALSE) +
-theme(
-  strip.background = element_blank(),  
-  strip.text.x = element_text(size = 6),
-  panel.border = element_blank(), 
-  panel.grid.major = element_blank(),
-  panel.grid.minor = element_blank(), 
-  text = element_text(size = 6),
-  axis.text.x = element_blank(),
-  axis.title.x = element_blank(),
-  axis.ticks.x=element_blank(),
-  axis.text.y = element_blank(),
-  axis.ticks.y = element_blank(),
-  axis.title.y = element_blank(),
-  plot.title = element_text(size = 6, face = "plain"),
-  plot.tag = element_text(size = 8, face = "plain"),
-  legend.key.size = unit(0.3, "cm"),
-  legend.text = element_text(size = 6),
-  legend.title = element_text(size = 6),
-  legend.position="right") +
-  labs(title = "", tag = "C")
-
-legend1 <- cowplot::get_legend(p1)
-
-modules_activation_inter2 <- modules_activation_inter
-modules_activation_inter2$type <- 'Activation Effect'
-
-p2 <- ggplot(modules_activation_inter2, aes(x = geneSymbol, y = type, fill = Effect )) +
-facet_grid(. ~ aso, scales = "free",  space = "free") +
-   geom_tile(width = 1) +
-   theme_bw() +
-scale_fill_distiller(palette = "RdBu", limits = c(-8, 8)) +
-scale_x_discrete(drop = TRUE) +
-scale_y_discrete(drop = FALSE) +
-theme(panel.border = element_blank(), 
-  panel.grid.major = element_blank(),
-  panel.grid.minor = element_blank(), 
-  strip.background = element_blank(),
-  strip.text.x = element_blank(),
-  text = element_text(size = 6),
-  axis.text.x = element_text(angle = 0, size = 5),
-  axis.title.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks.x = element_blank(),
-      axis.ticks.y = element_blank(),
-      axis.title.y = element_blank(),
-        legend.key.size = unit(0.3, "cm"),  # Key size
-  legend.text = element_text(size = 6),  # Text labels
-  legend.title = element_text(size = 6), # Title
-      legend.position="right") 
-
-legend2 <- cowplot::get_legend(p2)
-
-p <- ggarrange(p1, p2, align='v',
-          nrow=2, ncol = 1, common.legend = TRUE, legend="none")
-
-g <- arrangeGrob(p6, p, legend1, legend2,  ncol = 10, nrow = 4 , 
-  layout_matrix= rbind(c(1,1,1,1,1,1,1,1,1,1), c(1,1,1,1,1,1,1,1,1,1), c(2,2,2,2,2,2,2,2,2,3), c(2,2,2,2,2,2,2,2,2,4)))
-
-saveRDS(g, "time_activation_main.rds")
+saveRDS(p, "time_activation_main.rds")

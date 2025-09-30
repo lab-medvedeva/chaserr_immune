@@ -109,39 +109,58 @@ markers$aso_df_10_up <- unique( dplyr::filter(aso_df_10, log2FC >= 0 )$geneID)
 markers$aso_df_10_down <- unique( dplyr::filter(aso_df_10, log2FC < 0 )$geneID)
 
 obj <- AddModuleScore(obj, features = markers, name = "add_module_score")
-
+symnum.args <- list(cutpoints = c(0, 0.00001, 0.0001, 0.001, 0.01, Inf), symbols = c("****", "***", "**", "*", "ns"))
 p11 <- VlnPlot(obj, features = paste0("add_module_score",1), group.by = "cell_type", alpha = 0, raster=FALSE) +
-  theme(text = element_text(size = 8),
+  theme(
+  #plot.margin = unit(c(0, 0, 0, 0), "cm"),
+  text = element_text(size = 8),
   axis.text.x = element_blank(),
   axis.text.y = element_text(size = 8),
   plot.title = element_text(size = 6, face="plain"),
   axis.title = element_text(size = 6),
   plot.tag = element_text(size = 8, face="plain")) +
+  stat_compare_means(method='wilcox.test', label = "p.signif", ref.group=".all.", symnum.args = symnum.args, size = 2) +
   labs(title = "ASO_G0272888_AD_07, log2FC \u2265 0", tag = "E")
+p11$layers[[2]]$aes_params$textsize <- 2
+
 p12 <- VlnPlot(obj, features = paste0("add_module_score",2), group.by = "cell_type", alpha = 0, raster=FALSE) +
-  theme(text = element_text(size = 8),
+  theme(
+  #plot.margin = unit(c(0, 0, 0, 0), "cm"),
+  text = element_text(size = 8),
   axis.text.x = element_blank(),
   axis.text.y = element_text(size = 8),
   plot.title = element_text(size = 6, face="plain"),
   axis.title = element_text(size = 6),
   plot.tag = element_text(size = 8, face="plain")) +
+  stat_compare_means(method='wilcox.test', label = "p.signif", ref.group=".all.", symnum.args = symnum.args, size = 2) +
   labs(title = "ASO_G0272888_AD_07, log2FC < 0", tag = "")
+p12$layers[[2]]$aes_params$textsize <- 2
+
 p13 <- VlnPlot(obj, features = paste0("add_module_score",3), group.by = "cell_type", alpha = 0, raster=FALSE) +
-  theme(text = element_text(size = 8),
+  theme(
+  #plot.margin = unit(c(0, 0, 0, 0), "cm"),
+  text = element_text(size = 8),
   axis.text.x = element_blank(),
   axis.text.y = element_text(size = 8),
   plot.title = element_text(size = 6, face="plain"),
   axis.title = element_text(size = 6),
   plot.tag = element_text(size = 8, face="plain")) +
+  stat_compare_means(method='wilcox.test', label = "p.signif", ref.group=".all.", symnum.args = symnum.args, size = 2) +
   labs(title = "ASO_G0272888_AD_10, log2FC \u2265 0", tag = "")
+p13$layers[[2]]$aes_params$textsize <- 2
+
 p14 <- VlnPlot(obj, features = paste0("add_module_score",4), group.by = "cell_type", alpha = 0, raster=FALSE) +
-  theme(text = element_text(size = 8),
+  theme(
+  #plot.margin = unit(c(0, 0, 0, 0), "cm"),
+  text = element_text(size = 8),
   axis.text.x = element_blank(),
   axis.text.y = element_text(size = 8),
   plot.title = element_text(size = 6, face="plain"),
   axis.title = element_text(size = 6),
   plot.tag = element_text(size = 8, face="plain")) +
+  stat_compare_means(method='wilcox.test', label = "p.signif", ref.group=".all.", symnum.args = symnum.args, size = 2) +
   labs(title = "ASO_G0272888_AD_10, log2FC < 0", tag = "")
+p14$layers[[2]]$aes_params$textsize <- 2
 
 p5 <- ggarrange(p11, p12, p13, p14, common.legend = TRUE, legend = 'bottom', nrow = 2, ncol = 2)
 
@@ -153,6 +172,11 @@ pattern_name = 'GO:0042110'
 anno <- AnnotationDbi::select(GO.db, keys=c(pattern_name), keytype="GOID", columns=c("TERM","ONTOLOGY") )
 res_adj1 <- read.csv("gsva_all_corr.csv", sep="\t")
 
+res_adj1$pvalues_adj_str <- NA
+res_adj1$pvalues_adj_str <- as.character(signif(res_adj1$pvalues_adj, digits=4))
+res_adj1[res_adj1$pvalues_adj == 0, 'pvalues_adj_str'] = " < 2.225074e-308"
+
+
 p4 <-FeaturePlot(obj, pattern_name, pt.size = 0.5, reduction = "umap") + scale_color_gradientn(colors = rev(brewer.pal(11, "Spectral")))  +
  theme(axis.title.x=element_blank(),#axis.text.x=element_blank(),
         text = element_text(size = 6), #, face = "bold"
@@ -163,8 +187,10 @@ p4 <-FeaturePlot(obj, pattern_name, pt.size = 0.5, reduction = "umap") + scale_c
         plot.title = element_text(size = 6, face="plain"),
         axis.title = element_text(size = 6),
         plot.tag = element_text(size = 8, face="plain")) +
-labs(title = paste0(anno[anno$GOID == pattern_name, 'TERM'], "\n corr = ", res_adj1[res_adj1$genes == pattern_name,'corrs']), tag = "D")
+labs(title = paste0(anno[anno$GOID == pattern_name, 'TERM'], "\n corr = ",
+                         res_adj1[res_adj1$genes == pattern_name,'corrs'], "\n adjusted p-value",
+                         res_adj1[res_adj1$genes == pattern_name,'pvalues_adj_str']), tag = "D")
 
-g <- arrangeGrob(p1, p2, p3, p4, p5, ncol = 2, nrow = 4, layout_matrix= rbind(c(1,2), c(3,4), c(5,5))) 
+g <- arrangeGrob(p1, p2, p3, p4, p5, ncol = 2, nrow = 4, layout_matrix= rbind(c(1,2), c(3,4), c(5,5), c(5,5))) 
 ggsave(paste0("metacells.png"), plot = g,  units = "mm", width = 170, height = 225)
 
